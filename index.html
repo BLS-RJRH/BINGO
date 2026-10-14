@@ -398,7 +398,7 @@
             resetGameLogic(); 
         };
 
-        // คลิกครั้งแรกเพื่อเข้าโหมดเต็มจอและเปิดเสียง BGM เท่านั้น (ไม่สุ่มเลข)
+        // 1. เมื่อเข้าเว็บ host แล้ว หากทำการคลิ๊กจะเป็นการเปิดเสียง และเข้าสู่โหมด full screen
         document.addEventListener('click', function(e) {
             if(e.target.closest('.btn-show-qr') || e.target.closest('#qr-modal')) return;
 
@@ -415,11 +415,11 @@
             }
         });
 
-        // จัดการปุ่มกด Keyboard ควบคุมเกม
+        // ควบคุมผ่าน Keyboard
         document.addEventListener('keydown', function(event) {
             const key = event.key.toLowerCase();
 
-            // 1. Enter: สุ่มตัวเลข
+            // 2. กด enter เพื่อเริ่มเกม/สุ่มตัวเลขทันที
             if (event.key === 'Enter') {
                 event.preventDefault();
                 if(document.getElementById('qr-modal').style.display === 'flex') return;
@@ -431,22 +431,23 @@
                 }
                 drawNumber();
             } 
-            // 2. ปุ่ม r: รีเซ็ตเกมทันทีไม่ต้องยืนยัน
+            // 3. ปุ่ม r กดแล้วจะรีเซ็ตเกมส์ทันทีไม่ต้องยืนยัน
             else if (key === 'r') {
                 event.preventDefault();
                 resetGameLogic();
             } 
-            // 3. ปุ่ม q: แสดง QR Code
+            // 2. สามารถกด q เพื่อแสดง QR ก่อนเริ่มเกมส์ได้
             else if (key === 'q') {
                 event.preventDefault();
                 showQR();
             } 
-            // 4. ปุ่ม ESC: ปิดหน้าจอ QR และออกจากโหมดเต็มจอ
+            // 4. เมื่อต้องการออกจาก QR ให้กด esc (หรือถ้าไม่ได้เปิด QR ให้กด ESC เพื่อออกจากโหมดเต็มจอได้ด้วย)
             else if (event.key === 'Escape') {
                 event.preventDefault();
-                hideQR();
-                
-                if (document.fullscreenElement) {
+                const qrModal = document.getElementById('qr-modal');
+                if (qrModal.style.display === 'flex') {
+                    hideQR();
+                } else if (document.fullscreenElement) {
                     document.exitFullscreen().catch(() => {});
                 }
             }
