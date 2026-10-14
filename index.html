@@ -227,7 +227,6 @@
             margin: 0 auto;
             transition: all 0.1s ease;
             box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
-            cursor: pointer;
         }
 
         .number-cell.running {
@@ -399,7 +398,7 @@
             resetGameLogic(); 
         };
 
-        // คลิกครั้งแรกเพื่อเข้าโหมดเต็มจอและเปิดเสียง BGM
+        // คลิกครั้งแรกเพื่อเข้าโหมดเต็มจอและเปิดเสียง BGM เท่านั้น (ไม่สุ่มเลข)
         document.addEventListener('click', function(e) {
             if(e.target.closest('.btn-show-qr') || e.target.closest('#qr-modal')) return;
 
@@ -408,14 +407,11 @@
                 bgMusicStarted = true;
                 document.getElementById('click-hint').style.display = 'none';
                 
-                // เข้าโหมดเต็มจอ
                 let docEl = document.documentElement;
                 let requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
                 if(requestFullScreen) {
                     requestFullScreen.call(docEl).catch(() => {});
                 }
-            } else {
-                drawNumber();
             }
         });
 
@@ -448,7 +444,7 @@
             // 4. ปุ่ม ESC: ปิดหน้าจอ QR และออกจากโหมดเต็มจอ
             else if (event.key === 'Escape') {
                 event.preventDefault();
-                hideQR(); // ปิด QR ถ้าเปิดอยู่
+                hideQR();
                 
                 if (document.fullscreenElement) {
                     document.exitFullscreen().catch(() => {});
