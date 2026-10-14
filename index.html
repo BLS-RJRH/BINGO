@@ -103,7 +103,6 @@
             padding: 0 2vw;
         }
 
-        /* หัวข้อ BINGO สีทอง */
         .main-title-3d {
             font-size: 12vh;
             margin: 0;
@@ -125,7 +124,6 @@
             transition: all 0.5s ease;
         }
 
-        /* ปุ่มแสดง QR Code (ขวาบน) */
         .btn-show-qr {
             position: absolute;
             right: 3vw;
@@ -347,13 +345,13 @@
 </head>
 <body>
 
-    <div id="click-hint">คลิกที่กระดานหรือกด Enter เพื่อสุ่มเลข</div>
+    <div id="click-hint">คลิกครั้งแรกเพื่อเข้าโหมดเต็มจอและเปิดเสียง</div>
 
     <img id="readyImage" src="ready.png" alt="READY" class="ready-popup" onerror="this.style.display='none'">
 
     <div class="header-container">
         <h1 class="main-title-3d">BINGO</h1>
-        <button class="btn-show-qr" onclick="showQR()">📱 แสดง QR Code</button>
+        <button class="btn-show-qr" onclick="showQR()">📱 แสดง QR Code (กด q)</button>
     </div>
 
     <!-- กระดาน BINGO -->
@@ -371,7 +369,7 @@
             <h2>สแกนเพื่อเข้าเล่นเกม</h2>
             <img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=https://bls-rjrh.github.io/player/" class="qr-image" alt="QR Code">
             <div class="qr-url">bls-rjrh.github.io/player/</div>
-            <button class="btn-close-qr" onclick="hideQR()">ปิดหน้าต่าง</button>
+            <button class="btn-close-qr" onclick="hideQR()">ปิดหน้าต่าง (ESC)</button>
         </div>
     </div>
 
@@ -399,39 +397,61 @@
         window.onload = function() {
             createBoard();
             resetGameLogic(); 
-            
-            let playPromise = soundBG.play();
-            if (playPromise !== undefined) {
-                playPromise.then(_ => {
-                    bgMusicStarted = true;
-                    document.getElementById('click-hint').style.display = 'none';
-                }).catch(error => {
-                    console.log("Auto-play prevented.");
-                });
-            }
         };
 
+        // คลิกครั้งแรกเพื่อเข้าโหมดเต็มจอและเปิดเสียง BGM
         document.addEventListener('click', function(e) {
             if(e.target.closest('.btn-show-qr') || e.target.closest('#qr-modal')) return;
 
             if (!bgMusicStarted) {
-                soundBG.play();
+                soundBG.play().catch(() => {});
                 bgMusicStarted = true;
                 document.getElementById('click-hint').style.display = 'none';
+                
+                // เข้าโหมดเต็มจอ
+                let docEl = document.documentElement;
+                let requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+                if(requestFullScreen) {
+                    requestFullScreen.call(docEl).catch(() => {});
+                }
+            } else {
+                drawNumber();
             }
-            drawNumber();
         });
 
+        // จัดการปุ่มกด Keyboard ควบคุมเกม
         document.addEventListener('keydown', function(event) {
+            const key = event.key.toLowerCase();
+
+            // 1. Enter: สุ่มตัวเลข
             if (event.key === 'Enter') {
                 event.preventDefault();
                 if(document.getElementById('qr-modal').style.display === 'flex') return;
                 
-                if (!bgMusicStarted) { soundBG.play(); bgMusicStarted = true; }
+                if (!bgMusicStarted) { 
+                    soundBG.play().catch(() => {}); 
+                    bgMusicStarted = true; 
+                    document.getElementById('click-hint').style.display = 'none';
+                }
                 drawNumber();
-            } else if (event.key.toLowerCase() === 'r') {
-                if(confirm('รีเซ็ตเกมเริ่มใหม่?')) {
-                    resetGameLogic();
+            } 
+            // 2. ปุ่ม r: รีเซ็ตเกมทันทีไม่ต้องยืนยัน
+            else if (key === 'r') {
+                event.preventDefault();
+                resetGameLogic();
+            } 
+            // 3. ปุ่ม q: แสดง QR Code
+            else if (key === 'q') {
+                event.preventDefault();
+                showQR();
+            } 
+            // 4. ปุ่ม ESC: ปิดหน้าจอ QR และออกจากโหมดเต็มจอ
+            else if (event.key === 'Escape') {
+                event.preventDefault();
+                hideQR(); // ปิด QR ถ้าเปิดอยู่
+                
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(() => {});
                 }
             }
         });
@@ -557,7 +577,7 @@
             }
 
             soundWin.currentTime = 0;
-            soundWin.play();
+            soundWin.play().catch(() => {});
 
             const randomIndex = Math.floor(Math.random() * availableNumbers.length);
             const winnerNumber = availableNumbers[randomIndex];
