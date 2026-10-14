@@ -124,12 +124,13 @@
             transition: all 0.5s ease;
         }
 
-        .btn-show-qr {
+        /* เปลี่ยนป้ายแสดงสถานะรอบเกมมุมขวาบน */
+        .round-badge {
             position: absolute;
             right: 3vw;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(255, 215, 0, 0.1);
+            background: rgba(255, 215, 0, 0.15);
             color: #FFD700;
             border: 2px solid #FFD700;
             padding: 10px 20px;
@@ -137,15 +138,9 @@
             font-weight: bold;
             font-family: 'Sarabun';
             border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
             box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
             z-index: 100;
-        }
-        .btn-show-qr:hover {
-            background: #FFD700;
-            color: #001f3f;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+            pointer-events: none;
         }
 
         /* --- ตารางบิงโก --- */
@@ -350,7 +345,8 @@
 
     <div class="header-container">
         <h1 class="main-title-3d">BINGO</h1>
-        <button class="btn-show-qr" onclick="showQR()">📱 แสดง QR Code (กด q)</button>
+        <!-- เปลี่ยนเป็นป้ายแสดงรอบที่ X -->
+        <div class="round-badge" id="roundBadgeDisplay">รอบที่ 1</div>
     </div>
 
     <!-- กระดาน BINGO -->
@@ -365,9 +361,10 @@
     <!-- Modal สำหรับ QR Code -->
     <div id="qr-modal">
         <div class="qr-content">
-            <h2>สแกนเพื่อเข้าเล่นเกม</h2>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=https://bls-rjrh.github.io/player/" class="qr-image" alt="QR Code">
-            <div class="qr-url">bls-rjrh.github.io/player/</div>
+            <h2 id="qrTitleText">สแกนเพื่อเข้าเล่นเกม</h2>
+            <!-- รูป QR Code จะอัปเดตลิงก์พารามิเตอร์รอบเกมอัตโนมัติ -->
+            <img id="qrImageElement" src="" class="qr-image" alt="QR Code">
+            <div class="qr-url" id="qrUrlText">bls-rjrh.github.io/player/</div>
             <button class="btn-close-qr" onclick="hideQR()">ปิดหน้าต่าง (ESC)</button>
         </div>
     </div>
@@ -381,16 +378,19 @@
         let bgMusicStarted = false;
         let shuffleInterval = null;
         let currentRunningId = null; 
+        
+        // ตัวแปรเก็บหมายเลขรอบปัจจุบัน (เริ่มต้นรอบที่ 1)
+        let currentRound = 1;
 
         // ระบบเสียงตามไฟล์ bingo.ini
-        const soundBG = new Audio('Grease_Monkey.wav'); // BGM_SOUND[cite: 5]
+        const soundBG = new Audio('Grease_Monkey.wav');[cite: 5]
         soundBG.loop = true;
         soundBG.volume = 0.3;
 
-        const soundSpin = new Audio('ding.wav'); // RUN_SOUND[cite: 5]
+        const soundSpin = new Audio('ding.wav');[cite: 5]
         soundSpin.volume = 0.8; 
 
-        const soundWin = new Audio('cheering1.wav'); // STOP_SOUND[cite: 5]
+        const soundWin = new Audio('cheering1.wav');[cite: 5]
         soundWin.volume = 1.0;
 
         window.onload = function() {
@@ -398,9 +398,9 @@
             resetGameLogic(); 
         };
 
-        // 1. เมื่อเข้าเว็บ host แล้ว หากทำการคลิ๊กจะเป็นการเปิดเสียง และเข้าสู่โหมด full screen
+        // 1. คลิกเพื่อเปิดเสียง และเข้าสู่โหมด full screen
         document.addEventListener('click', function(e) {
-            if(e.target.closest('.btn-show-qr') || e.target.closest('#qr-modal')) return;
+            if(e.target.closest('#qr-modal')) return;
 
             if (!bgMusicStarted) {
                 soundBG.play().catch(() => {});
@@ -408,7 +408,7 @@
                 document.getElementById('click-hint').style.display = 'none';
                 
                 let docEl = document.documentElement;
-                let requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+                let requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullScreen;
                 if(requestFullScreen) {
                     requestFullScreen.call(docEl).catch(() => {});
                 }
@@ -431,17 +431,19 @@
                 }
                 drawNumber();
             } 
-            // 3. ปุ่ม r กดแล้วจะรีเซ็ตเกมส์ทันทีไม่ต้องยืนยัน
+            // 3. ปุ่ม r: รีเซ็ตเกมทันที พร้อมบวกเลขอัตโนมัติเป็นรอบถัดไป
             else if (key === 'r') {
                 event.preventDefault();
+                currentRound++; // เพิ่มเลขอัตโนมัติทุกครั้งที่รีเซ็ต
+                document.getElementById('roundBadgeDisplay').innerText = "รอบที่ " + currentRound;
                 resetGameLogic();
             } 
-            // 2. สามารถกด q เพื่อแสดง QR ก่อนเริ่มเกมส์ได้
+            // 2. กด q เพื่อแสดง QR พร้อมลิงก์รอบปัจจุบัน
             else if (key === 'q') {
                 event.preventDefault();
                 showQR();
             } 
-            // 4. เมื่อต้องการออกจาก QR ให้กด esc (หรือถ้าไม่ได้เปิด QR ให้กด ESC เพื่อออกจากโหมดเต็มจอได้ด้วย)
+            // 4. ESC: ปิดหน้าจอ QR หรือออกจากโหมดเต็มจอ
             else if (event.key === 'Escape') {
                 event.preventDefault();
                 const qrModal = document.getElementById('qr-modal');
@@ -454,8 +456,16 @@
         });
 
         function showQR() {
+            // สร้างลิงก์พารามิเตอร์พ่วงหมายเลขรอบปัจจุบัน เช่น ?r=1, ?r=2
+            const targetUrl = "https://bls-rjrh.github.io/player/?r=" + currentRound;
+            
+            document.getElementById('qrTitleText').innerText = "สแกนเพื่อเข้าเล่น (รอบที่ " + currentRound + ")";
+            document.getElementById('qrImageElement').src = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=" + encodeURIComponent(targetUrl);
+            document.getElementById('qrUrlText').innerText = "bls-rjrh.github.io/player/?r=" + currentRound;
+            
             document.getElementById('qr-modal').style.display = 'flex';
         }
+
         function hideQR() {
             document.getElementById('qr-modal').style.display = 'none';
         }
