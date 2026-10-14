@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BINGO - Host Screen</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background: linear-gradient(135deg, #000c19, #001f3f, #003366, #001f3f);
+            background-size: 400% 400%;
+            animation: gradientBG 20s ease infinite;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; 
+            color: #ffffff;
+            user-select: none;
+            position: relative;
+        }
+
+        /* --- Effect พื้นหลัง --- */
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        body::before {
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.1) 0%, transparent 10%),
+                radial-gradient(circle at 80% 10%, rgba(255,255,255,0.05) 0%, transparent 10%);
+            background-size: 120% 120%;
+            animation: floatingParticles 25s linear infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes floatingParticles {
+            0% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-50px) scale(1.05); }
+            100% { transform: translateY(0) scale(1); }
+        }
+
+        /* --- รูป Ready --- */
+        .ready-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 80vw;
+            max-height: 60vh;
+            z-index: 9999;
+            display: block;
+            animation: popInReady 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), pulseReady 2s infinite alternate;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+            pointer-events: none;
+        }
+
+        @keyframes popInReady {
+            from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        @keyframes pulseReady {
+            from { transform: translate(-50%, -50%) scale(1); filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5)); }
+            to { transform: translate(-50%, -50%) scale(1.05); filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.9)); }
+        }
+
+        .dimmed-bg {
+            opacity: 0.2;
+            filter: blur(4px);
+            transition: all 0.5s ease;
+        }
+
+        /* --- ส่วนหัว (Header) --- */
+        .header-container {
+            flex: 0 0 20vh; 
+            display: flex;
+            align-items: center; 
+            justify-content: center;
+            position: relative;
+            width: 100%;
+            z-index: 2;
+            padding: 0 2vw;
+        }
+
+        /* หัวข้อ BINGO สีทอง */
+        .main-title-3d {
+            font-size: 12vh;
+            margin: 0;
+            padding: 0;
+            font-weight: 900;
+            letter-spacing: 5px;
+            color: #FFD700; 
+            line-height: 1;
+            text-shadow: 
+                -2px -2px 0 #FFFFFF,  
+                 2px -2px 0 #FFFFFF,
+                -2px  2px 0 #FFFFFF,
+                 2px  2px 0 #FFFFFF,
+                 4px  4px 0 #B8860B,
+                 5px  5px 0 #B8860B,
+                 6px  6px 0 #B8860B,
+                 8px  8px 20px rgba(0,0,0,0.8);
+            transform: skewX(-5deg) rotateY(10deg);
+            transition: all 0.5s ease;
+        }
+
+        /* ปุ่มแสดง QR Code (ขวาบน) */
+        .btn-show-qr {
+            position: absolute;
+            right: 3vw;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 215, 0, 0.1);
+            color: #FFD700;
+            border: 2px solid #FFD700;
+            padding: 10px 20px;
+            font-size: 2.5vh;
+            font-weight: bold;
+            font-family: 'Sarabun';
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+            z-index: 100;
+        }
+        .btn-show-qr:hover {
+            background: #FFD700;
+            color: #001f3f;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        }
+
+        /* --- ตารางบิงโก --- */
+        .board-container {
+            flex: 1; 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: rgba(13, 71, 161, 0.2); 
+            width: 96vw; 
+            margin: 0 auto 2vh auto; 
+            padding: 1vh 2vw;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.2); 
+            position: relative;
+            z-index: 2;
+            transition: all 0.5s ease;
+        }
+
+        .board-row {
+            flex: 1; 
+            display: flex;
+            align-items: center;
+            margin: 0.5vh 0;
+            gap: 1vw;
+        }
+
+        .row-header {
+            width: 6vw;
+            height: 85%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4vh;
+            font-weight: 900;
+            color: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.2);
+            animation: spin3D 5s linear infinite;
+        }
+
+        .header-B { background: linear-gradient(to bottom right, #D32F2F, #B71C1C); animation-delay: 0s; }
+        .header-I { background: linear-gradient(to bottom right, #FFCA28, #FF6F00); color: #000; animation-delay: 1s; }
+        .header-N { background: linear-gradient(to bottom right, #388E3C, #1B5E20); animation-delay: 2s; }
+        .header-G { background: linear-gradient(to bottom right, #1976D2, #0D47A1); animation-delay: 3s; }
+        .header-O { background: linear-gradient(to bottom right, #7B1FA2, #4A148C); animation-delay: 4s; }
+
+        @keyframes spin3D {
+            0% { transform: perspective(400px) rotateY(0deg); }
+            100% { transform: perspective(400px) rotateY(360deg); }
+        }
+
+        .row-numbers {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            gap: 0.5vw;
+            height: 100%;
+            align-items: center;
+        }
+
+        .number-cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            font-size: 2.8vmin; 
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.08); 
+            color: rgba(255, 255, 255, 0.4); 
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%;
+            aspect-ratio: 1/1; 
+            max-height: 100%;
+            margin: 0 auto;
+            transition: all 0.1s ease;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+
+        .number-cell.running {
+            background: #FFAB00;
+            color: #000;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 171, 0, 0.8);
+            border-color: #FFF;
+            z-index: 20;
+            opacity: 1;
+        }
+
+        .number-cell.active {
+            background: linear-gradient(135deg, #FFD700, #FFA000); 
+            color: #0D47A1;            
+            border: 3px solid #FFFFFF; 
+            font-weight: 900;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); 
+            opacity: 1;
+            z-index: 5;
+        }
+
+        .number-cell.active-recent {
+            background: linear-gradient(135deg, #FF5252, #D50000); 
+            color: white;
+            border: 3px solid #FFF;
+            animation: pulse 1s infinite;
+            z-index: 10;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 82, 82, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 82, 82, 0); }
+        }
+
+        #click-hint {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: #FFD700;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0.8;
+            z-index: 100;
+            font-weight: bold;
+            border: 1px solid #FFD700;
+        }
+
+        /* --- Modal สำหรับ QR Code --- */
+        #qr-modal {
+            display: none; 
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0, 12, 25, 0.95);
+            z-index: 99999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .qr-content {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            border: 5px solid #FFD700;
+            position: relative;
+            animation: popInReady 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .qr-content h2 {
+            color: #001f3f;
+            margin-top: 0;
+            font-size: 3vh;
+        }
+
+        .qr-image {
+            width: 40vh;
+            height: 40vh;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .qr-url {
+            color: #d32f2f;
+            font-weight: bold;
+            font-size: 2.5vh;
+            margin-bottom: 20px;
+        }
+
+        .btn-close-qr {
+            background: #001f3f;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-size: 2vh;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: 'Sarabun';
+            font-weight: bold;
+        }
+        .btn-close-qr:hover { background: #d32f2f; }
+
+    </style>
+</head>
+<body>
+
+    <div id="click-hint">คลิกที่กระดานหรือกด Enter เพื่อสุ่มเลข</div>
+
+    <img id="readyImage" src="ready.png" alt="READY" class="ready-popup" onerror="this.style.display='none'">
+
+    <div class="header-container">
+        <h1 class="main-title-3d">BINGO</h1>
+        <button class="btn-show-qr" onclick="showQR()">📱 แสดง QR Code</button>
+    </div>
+
+    <!-- กระดาน BINGO -->
+    <div class="board-container" id="boardContainer">
+        <div class="board-row"><div class="row-header header-B">B</div><div id="row-B" class="row-numbers"></div></div>
+        <div class="board-row"><div class="row-header header-I">I</div><div id="row-I" class="row-numbers"></div></div>
+        <div class="board-row"><div class="row-header header-N">N</div><div id="row-N" class="row-numbers"></div></div>
+        <div class="board-row"><div class="row-header header-G">G</div><div id="row-G" class="row-numbers"></div></div>
+        <div class="board-row"><div class="row-header header-O">O</div><div id="row-O" class="row-numbers"></div></div>
+    </div>
+
+    <!-- Modal สำหรับ QR Code -->
+    <div id="qr-modal">
+        <div class="qr-content">
+            <h2>สแกนเพื่อเข้าเล่นเกม</h2>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=https://bls-rjrh.github.io/player/" class="qr-image" alt="QR Code">
+            <div class="qr-url">bls-rjrh.github.io/player/</div>
+            <button class="btn-close-qr" onclick="hideQR()">ปิดหน้าต่าง</button>
+        </div>
+    </div>
+
+    <script>
+        const totalNumbers = 75;
+        let availableNumbers = [];
+        let drawnNumbers = [];
+        let isSpinning = false;
+        let lastDrawnId = null;
+        let bgMusicStarted = false;
+        let shuffleInterval = null;
+        let currentRunningId = null; 
+
+        // ระบบเสียงตามไฟล์ bingo.ini
+        const soundBG = new Audio('Grease_Monkey.wav'); // BGM_SOUND[cite: 5]
+        soundBG.loop = true;
+        soundBG.volume = 0.3;
+
+        const soundSpin = new Audio('ding.wav'); // RUN_SOUND[cite: 5]
+        soundSpin.volume = 0.8; 
+
+        const soundWin = new Audio('cheering1.wav'); // STOP_SOUND[cite: 5]
+        soundWin.volume = 1.0;
+
+        window.onload = function() {
+            createBoard();
+            resetGameLogic(); 
+            
+            let playPromise = soundBG.play();
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+                    bgMusicStarted = true;
+                    document.getElementById('click-hint').style.display = 'none';
+                }).catch(error => {
+                    console.log("Auto-play prevented.");
+                });
+            }
+        };
+
+        document.addEventListener('click', function(e) {
+            if(e.target.closest('.btn-show-qr') || e.target.closest('#qr-modal')) return;
+
+            if (!bgMusicStarted) {
+                soundBG.play();
+                bgMusicStarted = true;
+                document.getElementById('click-hint').style.display = 'none';
+            }
+            drawNumber();
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                if(document.getElementById('qr-modal').style.display === 'flex') return;
+                
+                if (!bgMusicStarted) { soundBG.play(); bgMusicStarted = true; }
+                drawNumber();
+            } else if (event.key.toLowerCase() === 'r') {
+                if(confirm('รีเซ็ตเกมเริ่มใหม่?')) {
+                    resetGameLogic();
+                }
+            }
+        });
+
+        function showQR() {
+            document.getElementById('qr-modal').style.display = 'flex';
+        }
+        function hideQR() {
+            document.getElementById('qr-modal').style.display = 'none';
+        }
+
+        function createBoard() {
+            const ranges = [
+                { id: 'row-B', start: 1, end: 15 },
+                { id: 'row-I', start: 16, end: 30 },
+                { id: 'row-N', start: 31, end: 45 },
+                { id: 'row-G', start: 46, end: 60 },
+                { id: 'row-O', start: 61, end: 75 }
+            ];
+
+            ranges.forEach(range => {
+                const container = document.getElementById(range.id);
+                for (let i = range.start; i <= range.end; i++) {
+                    let div = document.createElement('div');
+                    div.className = 'number-cell';
+                    div.id = 'num-' + i;
+                    div.textContent = i;
+                    container.appendChild(div);
+                }
+            });
+        }
+
+        function resetGameLogic() {
+            if (shuffleInterval) {
+                clearInterval(shuffleInterval);
+                shuffleInterval = null;
+            }
+            isSpinning = false; 
+
+            if (currentRunningId) {
+                const el = document.getElementById(currentRunningId);
+                if (el) el.classList.remove('running');
+                currentRunningId = null;
+            }
+
+            soundSpin.pause();
+            soundSpin.currentTime = 0;
+            soundWin.pause();
+            soundWin.currentTime = 0;
+
+            availableNumbers = [];
+            drawnNumbers = [];
+            lastDrawnId = null;
+            
+            for (let i = 1; i <= totalNumbers; i++) {
+                availableNumbers.push(i);
+            }
+
+            const readyImg = document.getElementById('readyImage');
+            const boardContainer = document.getElementById('boardContainer');
+            const headerContainer = document.querySelector('.header-container');
+
+            readyImg.style.display = 'block';  
+
+            boardContainer.classList.add('dimmed-bg');
+            headerContainer.classList.add('dimmed-bg');
+
+            document.querySelectorAll('.number-cell').forEach(el => {
+                el.classList.remove('active');
+                el.classList.remove('active-recent');
+                el.classList.remove('running');
+            });
+        }
+
+        function drawNumber() {
+            if (availableNumbers.length === 0) return;
+            if (isSpinning) return; 
+            isSpinning = true;
+
+            document.getElementById('boardContainer').classList.remove('dimmed-bg');
+            document.querySelector('.header-container').classList.remove('dimmed-bg');
+            document.getElementById('readyImage').style.display = 'none';
+
+            const duration = Math.floor(Math.random() * 2000) + 3000;
+            const startTime = Date.now();
+            
+            shuffleInterval = setInterval(() => {
+                const elapsedTime = Date.now() - startTime;
+                
+                soundSpin.pause();
+                soundSpin.currentTime = 0;
+                soundSpin.play().catch(() => {});
+
+                if (currentRunningId) {
+                    const prevEl = document.getElementById(currentRunningId);
+                    if (prevEl) prevEl.classList.remove('running');
+                }
+
+                const tempIndex = Math.floor(Math.random() * availableNumbers.length);
+                const tempNum = availableNumbers[tempIndex];
+                const newEl = document.getElementById('num-' + tempNum);
+                
+                if (newEl) {
+                    newEl.classList.add('running');
+                    currentRunningId = 'num-' + tempNum;
+                }
+
+                if (elapsedTime >= duration) {
+                    clearInterval(shuffleInterval);
+                    shuffleInterval = null;
+                    finalizeDraw();
+                }
+            }, 60);
+        }
+
+        function finalizeDraw() {
+            soundSpin.pause();
+            
+            if (currentRunningId) {
+                const el = document.getElementById(currentRunningId);
+                if (el) el.classList.remove('running');
+                currentRunningId = null;
+            }
+
+            soundWin.currentTime = 0;
+            soundWin.play();
+
+            const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+            const winnerNumber = availableNumbers[randomIndex];
+
+            availableNumbers.splice(randomIndex, 1);
+            drawnNumbers.push(winnerNumber);
+
+            const cell = document.getElementById('num-' + winnerNumber);
+            
+            if (lastDrawnId) {
+                const lastCell = document.getElementById(lastDrawnId);
+                if (lastCell) lastCell.classList.remove('active-recent');
+            }
+
+            if (cell) {
+                cell.classList.add('active');
+                cell.classList.add('active-recent');
+                lastDrawnId = 'num-' + winnerNumber;
+            }
+
+            isSpinning = false;
+        }
+    </script>
+</body>
+</html>
