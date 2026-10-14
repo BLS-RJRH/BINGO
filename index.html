@@ -124,7 +124,6 @@
             transition: all 0.5s ease;
         }
 
-        /* เปลี่ยนป้ายแสดงสถานะรอบเกมมุมขวาบน */
         .round-badge {
             position: absolute;
             right: 3vw;
@@ -259,22 +258,6 @@
             100% { box-shadow: 0 0 0 0 rgba(255, 82, 82, 0); }
         }
 
-        #click-hint {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0, 0, 0, 0.5);
-            color: #FFD700;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            pointer-events: none;
-            opacity: 0.8;
-            z-index: 100;
-            font-weight: bold;
-            border: 1px solid #FFD700;
-        }
-
         /* --- Modal สำหรับ QR Code --- */
         #qr-modal {
             display: none; 
@@ -339,13 +322,10 @@
 </head>
 <body>
 
-    <div id="click-hint">คลิกครั้งแรกเพื่อเข้าโหมดเต็มจอและเปิดเสียง</div>
-
     <img id="readyImage" src="ready.png" alt="READY" class="ready-popup" onerror="this.style.display='none'">
 
     <div class="header-container">
         <h1 class="main-title-3d">BINGO</h1>
-        <!-- เปลี่ยนเป็นป้ายแสดงรอบที่ X -->
         <div class="round-badge" id="roundBadgeDisplay">รอบที่ 1</div>
     </div>
 
@@ -362,7 +342,6 @@
     <div id="qr-modal">
         <div class="qr-content">
             <h2 id="qrTitleText">สแกนเพื่อเข้าเล่นเกม</h2>
-            <!-- รูป QR Code จะอัปเดตลิงก์พารามิเตอร์รอบเกมอัตโนมัติ -->
             <img id="qrImageElement" src="" class="qr-image" alt="QR Code">
             <div class="qr-url" id="qrUrlText">bls-rjrh.github.io/player/</div>
             <button class="btn-close-qr" onclick="hideQR()">ปิดหน้าต่าง (ESC)</button>
@@ -379,18 +358,17 @@
         let shuffleInterval = null;
         let currentRunningId = null; 
         
-        // ตัวแปรเก็บหมายเลขรอบปัจจุบัน (เริ่มต้นรอบที่ 1)
         let currentRound = 1;
 
         // ระบบเสียงตามไฟล์ bingo.ini
-        const soundBG = new Audio('Grease_Monkey.wav');[cite: 5]
+        const soundBG = new Audio('Grease_Monkey.wav');
         soundBG.loop = true;
         soundBG.volume = 0.3;
 
-        const soundSpin = new Audio('ding.wav');[cite: 5]
+        const soundSpin = new Audio('ding.wav');
         soundSpin.volume = 0.8; 
 
-        const soundWin = new Audio('cheering1.wav');[cite: 5]
+        const soundWin = new Audio('cheering1.wav');
         soundWin.volume = 1.0;
 
         window.onload = function() {
@@ -398,17 +376,16 @@
             resetGameLogic(); 
         };
 
-        // 1. คลิกเพื่อเปิดเสียง และเข้าสู่โหมด full screen
+        // คลิกครั้งแรกเพื่อเปิดเสียงและเข้าโหมดเต็มจอ
         document.addEventListener('click', function(e) {
             if(e.target.closest('#qr-modal')) return;
 
             if (!bgMusicStarted) {
                 soundBG.play().catch(() => {});
                 bgMusicStarted = true;
-                document.getElementById('click-hint').style.display = 'none';
                 
                 let docEl = document.documentElement;
-                let requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullScreen;
+                let requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
                 if(requestFullScreen) {
                     requestFullScreen.call(docEl).catch(() => {});
                 }
@@ -419,7 +396,7 @@
         document.addEventListener('keydown', function(event) {
             const key = event.key.toLowerCase();
 
-            // 2. กด enter เพื่อเริ่มเกม/สุ่มตัวเลขทันที
+            // กด Enter เพื่อสุ่มตัวเลข
             if (event.key === 'Enter') {
                 event.preventDefault();
                 if(document.getElementById('qr-modal').style.display === 'flex') return;
@@ -427,23 +404,22 @@
                 if (!bgMusicStarted) { 
                     soundBG.play().catch(() => {}); 
                     bgMusicStarted = true; 
-                    document.getElementById('click-hint').style.display = 'none';
                 }
                 drawNumber();
             } 
-            // 3. ปุ่ม r: รีเซ็ตเกมทันที พร้อมบวกเลขอัตโนมัติเป็นรอบถัดไป
+            // กด r เพื่อรีเซ็ตเกมและขึ้นรอบถัดไป
             else if (key === 'r') {
                 event.preventDefault();
-                currentRound++; // เพิ่มเลขอัตโนมัติทุกครั้งที่รีเซ็ต
+                currentRound++;
                 document.getElementById('roundBadgeDisplay').innerText = "รอบที่ " + currentRound;
                 resetGameLogic();
             } 
-            // 2. กด q เพื่อแสดง QR พร้อมลิงก์รอบปัจจุบัน
+            // กด q เพื่อแสดง QR Code
             else if (key === 'q') {
                 event.preventDefault();
                 showQR();
             } 
-            // 4. ESC: ปิดหน้าจอ QR หรือออกจากโหมดเต็มจอ
+            // กด ESC เพื่อปิด QR หรือออก Fullscreen
             else if (event.key === 'Escape') {
                 event.preventDefault();
                 const qrModal = document.getElementById('qr-modal');
@@ -456,7 +432,6 @@
         });
 
         function showQR() {
-            // สร้างลิงก์พารามิเตอร์พ่วงหมายเลขรอบปัจจุบัน เช่น ?r=1, ?r=2
             const targetUrl = "https://bls-rjrh.github.io/player/?r=" + currentRound;
             
             document.getElementById('qrTitleText').innerText = "สแกนเพื่อเข้าเล่น (รอบที่ " + currentRound + ")";
